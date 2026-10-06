@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { MongoService } from '../../lib/mongo/mongo.service.js';
-import { RedisService } from '../../lib/redis/redis.service.js';
-import { AppController } from './app.controller.js';
-import { AppService } from './app.service.js';
+import { MongoService } from '../../lib/mongo/mongo.service.ts';
+import { RedisService } from '../../lib/redis/redis.service.ts';
+import { AppController } from './app.controller.ts';
+import { AppService } from './app.service.ts';
 
 describe('AppController', () => {
   let appController: AppController;

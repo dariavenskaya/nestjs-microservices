@@ -2,9 +2,9 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { App } from 'supertest/types';
-import { MongoService } from '../../lib/mongo/mongo.service.js';
-import { RedisService } from '../../lib/redis/redis.service.js';
-import { AppModule } from './../src/app.module.js';
+import { MongoService } from '../../lib/mongo/mongo.service.ts';
+import { RedisService } from '../../lib/redis/redis.service.ts';
+import { AppModule } from './../src/app.module.ts';
 
 describe('AppController (e2e)', () => {
   let app: INestApplication<App>;

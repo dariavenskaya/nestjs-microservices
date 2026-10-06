@@ -1,7 +1,7 @@
 import { Controller, Get } from '@nestjs/common';
-import { MongoService } from '../../lib/mongo/mongo.service.js';
-import { RedisService } from '../../lib/redis/redis.service.js';
-import { AppService } from './app.service.js';
+import { MongoService } from '../../lib/mongo/mongo.service.ts';
+import { RedisService } from '../../lib/redis/redis.service.ts';
+import { AppService } from './app.service.ts';
 
 @Controller()
 export class AppController {

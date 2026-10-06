@@ -1,5 +1,5 @@
-import { Global, Module } from '@nestjs/common';
-import { MongoService } from './mongo.service.js';
+import { Global, Module } from "@nestjs/common";
+import { MongoService } from "./mongo.service.ts";
 
 @Global()
 @Module({
