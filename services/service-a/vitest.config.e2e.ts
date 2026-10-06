@@ -3,6 +3,12 @@ import tsconfigPaths from 'vite-tsconfig-paths';
 
 export default defineConfig({
   plugins: [tsconfigPaths()],
+  oxc: {
+    decorator: {
+      legacy: true,
+      emitDecoratorMetadata: true,
+    },
+  },
   test: {
     globals: true,
     root: './',

@@ -33,7 +33,8 @@ services:
 
   service-a:
     build:
-      context: ./services/service-a
+      context: ./services
+      dockerfile: service-a/Dockerfile
     restart: unless-stopped
     ports:
       - "${SERVICE_A_PORT:-3001}:3000"
@@ -63,7 +64,8 @@ services:
 
   service-b:
     build:
-      context: ./services/service-b
+      context: ./services
+      dockerfile: service-b/Dockerfile
     restart: unless-stopped
     ports:
       - "${SERVICE_B_PORT:-3002}:3000"
