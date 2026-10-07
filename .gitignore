@@ -13,8 +13,8 @@ dist/
 
 # Logs
 /logs
-data/
-uploads/
+/data/
+/uploads/
 *.log
 npm-debug.log*
 pnpm-debug.log*
