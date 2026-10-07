@@ -1,7 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
-import { App } from 'supertest/types';
 import { MessagingService } from '../../lib/messaging/messaging.service.ts';
 import { MongoService } from '../../lib/mongo/mongo.service.ts';
 import { RedisService } from '../../lib/redis/redis.service.ts';
@@ -9,8 +8,8 @@ import { EventsSubscriber } from './../src/events/events.subscriber.ts';
 import { LogsService } from './../src/logs/logs.service.ts';
 import { AppModule } from './../src/app.module.ts';
 
-describe('AppController (e2e)', () => {
-  let app: INestApplication<App>;
+describe('Logs (e2e)', () => {
+  let app: INestApplication;
 
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -21,9 +20,14 @@ describe('AppController (e2e)', () => {
       .overrideProvider(RedisService)
       .useValue({ ping: async () => 'PONG' })
       .overrideProvider(MessagingService)
-      .useValue({ publish: async () => undefined, subscribe: async () => undefined })
+      .useValue({
+        publish: async () => undefined,
+        subscribe: async () => undefined,
+      })
       .overrideProvider(LogsService)
-      .useValue({})
+      .useValue({
+        query: async () => ({ data: [], total: 0, page: 1, limit: 10 }),
+      })
       .overrideProvider(EventsSubscriber)
       .useValue({})
       .compile();
@@ -32,11 +36,11 @@ describe('AppController (e2e)', () => {
     await app.init();
   });
 
-  it('/ (GET)', () => {
+  it('GET /logs returns a page of event logs', () => {
     return request(app.getHttpServer())
-      .get('/')
+      .get('/logs')
       .expect(200)
-      .expect('Hello World!');
+      .expect({ data: [], total: 0, page: 1, limit: 10 });
   });
 
   afterEach(async () => {
