@@ -11,6 +11,7 @@ export interface MessagePayload {
   data: any;
   timestamp: number;
   service: string;
+  correlationId?: string;
 }
 
 @Injectable()
@@ -23,6 +24,8 @@ export class MessagingService implements OnModuleInit, OnModuleDestroy {
   async onModuleInit() {
     this.publisher = createClient({ url: this.uri }) as RedisClientType;
     this.subscriber = createClient({ url: this.uri }) as RedisClientType;
+    this.publisher.on('error', (error: Error) => console.error(error.message));
+    this.subscriber.on('error', (error: Error) => console.error(error.message));
 
     await this.publisher.connect();
     await this.subscriber.connect();

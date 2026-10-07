@@ -42,6 +42,11 @@ services:
       PORT: 3000
       MONGODB_URI: mongodb://mongo:27017/service_a
       REDIS_URL: redis://redis:6379
+      DATA_DIR: /data
+      UPLOAD_DIR: /uploads
+    volumes:
+      - service_a_data:/data
+      - service_a_uploads:/uploads
     depends_on:
       mongo:
         condition: service_healthy
@@ -96,6 +101,8 @@ services:
 volumes:
   mongo_data:
   redis_data:
+  service_a_data:
+  service_a_uploads:
 
 networks:
   app:

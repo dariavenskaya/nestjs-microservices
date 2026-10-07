@@ -12,7 +12,9 @@ dist/
 *.tsbuildinfo
 
 # Logs
-logs
+/logs
+data/
+uploads/
 *.log
 npm-debug.log*
 pnpm-debug.log*

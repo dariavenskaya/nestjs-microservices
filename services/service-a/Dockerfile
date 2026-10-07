@@ -18,9 +18,11 @@ RUN npm run build && npm prune --omit=dev
 FROM node:24-alpine AS production
 WORKDIR /app
 ENV NODE_ENV=production
+RUN apk add --no-cache su-exec
 COPY --from=build /services/service-a/package.json ./package.json
 COPY --from=build /services/service-a/node_modules ./node_modules
 COPY --from=build /services/service-a/dist ./dist
+COPY service-a/entrypoint.sh ./entrypoint.sh
+RUN chmod +x ./entrypoint.sh
 EXPOSE 3000
-USER node
-CMD ["node", "dist/service-a/src/main.js"]
+ENTRYPOINT ["./entrypoint.sh"]

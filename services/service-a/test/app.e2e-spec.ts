@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { App } from 'supertest/types';
+import { MessagingService } from '../../lib/messaging/messaging.service.ts';
 import { MongoService } from '../../lib/mongo/mongo.service.ts';
 import { RedisService } from '../../lib/redis/redis.service.ts';
 import { AppModule } from './../src/app.module.ts';
@@ -17,6 +18,8 @@ describe('AppController (e2e)', () => {
       .useValue({ ping: async () => undefined })
       .overrideProvider(RedisService)
       .useValue({ ping: async () => 'PONG' })
+      .overrideProvider(MessagingService)
+      .useValue({ publish: async () => undefined, subscribe: async () => undefined })
       .compile();
 
     app = moduleFixture.createNestApplication();
