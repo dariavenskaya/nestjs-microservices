@@ -3,8 +3,8 @@ import {
   Logger,
   OnModuleDestroy,
   OnModuleInit,
-} from '@nestjs/common';
-import { type Collection, type Db, type Document, MongoClient } from 'mongodb';
+} from "@nestjs/common";
+import { type Collection, type Db, type Document, MongoClient } from "mongodb";
 
 @Injectable()
 export class MongoService implements OnModuleInit, OnModuleDestroy {
@@ -14,12 +14,12 @@ export class MongoService implements OnModuleInit, OnModuleDestroy {
   async onModuleInit(): Promise<void> {
     const uri = process.env.MONGODB_URI;
     if (!uri) {
-      throw new Error('MONGODB_URI is not set');
+      throw new Error("MONGODB_URI is not set");
     }
 
     this.client = new MongoClient(uri, { serverSelectionTimeoutMS: 5_000 });
     await this.client.connect();
-    this.logger.log('Connected to MongoDB');
+    this.logger.log("Connected to MongoDB");
   }
 
   async onModuleDestroy(): Promise<void> {
@@ -28,7 +28,7 @@ export class MongoService implements OnModuleInit, OnModuleDestroy {
 
   get db(): Db {
     if (!this.client) {
-      throw new Error('MongoDB client is not connected');
+      throw new Error("MongoDB client is not connected");
     }
 
     return this.client.db();
@@ -40,13 +40,9 @@ export class MongoService implements OnModuleInit, OnModuleDestroy {
 
   getClient(): MongoClient {
     if (!this.client) {
-      throw new Error('MongoDB client is not connected');
+      throw new Error("MongoDB client is not connected");
     }
 
     return this.client;
-  }
-
-  async ping(): Promise<void> {
-    await this.db.command({ ping: 1 });
   }
 }

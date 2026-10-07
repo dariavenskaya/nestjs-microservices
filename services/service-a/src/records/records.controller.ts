@@ -13,13 +13,13 @@ export class RecordsController {
   ) {}
 
   @Get('search')
-  @ApiOperation({ summary: 'Search records using the text index, with page-based pagination' })
+  @ApiOperation({ summary: 'Search records using the text index, with cursor pagination' })
   async search(@Query() dto: SearchDto) {
     const started = Date.now();
-    const result = await this.recordsService.search(dto.q, dto.page, dto.limit, dto.sortBy, dto.sortOrder);
+    const result = await this.recordsService.search(dto.q, dto.cursor, dto.limit);
     await this.eventsService.publishApiAction('RECORDS_SEARCHED', {
       query: dto.q ?? '',
-      page: result.page,
+      cursor: dto.cursor ?? '',
       limit: result.limit,
       resultCount: result.data.length,
       total: result.total,

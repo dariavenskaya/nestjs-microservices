@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsDateString, IsOptional, IsString } from 'class-validator';
+import { IsDateString, IsEnum, IsOptional } from 'class-validator';
+import { EventType } from '../types.ts';
 
 export class ReportQueryDto {
   @ApiProperty({ example: '2026-01-01' })
@@ -10,8 +11,8 @@ export class ReportQueryDto {
   @IsDateString()
   endDate: string;
 
-  @ApiProperty({ required: false, example: 'DATA_FETCHED' })
-  @IsString()
+  @ApiProperty({ required: false, example: 'DATA_FETCHED', enum: EventType })
+  @IsEnum(EventType)
   @IsOptional()
-  type?: string;
+  type?: EventType;
 }

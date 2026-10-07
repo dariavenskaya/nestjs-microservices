@@ -19,13 +19,15 @@ export class MessagingService implements OnModuleInit, OnModuleDestroy {
   private publisher!: RedisClientType;
   private subscriber!: RedisClientType;
 
-  constructor(@Inject("MESSAGING_URI") private readonly uri: string) {}
-
   async onModuleInit() {
-    this.publisher = createClient({ url: this.uri }) as RedisClientType;
-    this.subscriber = createClient({ url: this.uri }) as RedisClientType;
-    this.publisher.on('error', (error: Error) => console.error(error.message));
-    this.subscriber.on('error', (error: Error) => console.error(error.message));
+    const url = process.env.REDIS_URL;
+    if (!url) {
+      throw new Error("REDIS_URL is not set");
+    }
+    this.publisher = createClient({ url }) as RedisClientType;
+    this.subscriber = createClient({ url }) as RedisClientType;
+    this.publisher.on("error", (error: Error) => console.error(error.message));
+    this.subscriber.on("error", (error: Error) => console.error(error.message));
 
     await this.publisher.connect();
     await this.subscriber.connect();

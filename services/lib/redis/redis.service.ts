@@ -3,8 +3,8 @@ import {
   Logger,
   OnModuleDestroy,
   OnModuleInit,
-} from '@nestjs/common';
-import { createClient } from 'redis';
+} from "@nestjs/common";
+import { createClient } from "redis";
 
 type RedisClient = ReturnType<typeof createClient>;
 
@@ -16,18 +16,18 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   async onModuleInit(): Promise<void> {
     const url = process.env.REDIS_URL;
     if (!url) {
-      throw new Error('REDIS_URL is not set');
+      throw new Error("REDIS_URL is not set");
     }
 
     this.client = createClient({
       url,
       socket: { connectTimeout: 5_000 },
     });
-    this.client.on('error', (error: Error) => {
+    this.client.on("error", (error: Error) => {
       this.logger.error(error.message);
     });
     await this.client.connect();
-    this.logger.log('Connected to Redis');
+    this.logger.log("Connected to Redis");
   }
 
   async onModuleDestroy(): Promise<void> {
@@ -38,42 +38,60 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
 
   getClient(): RedisClient {
     if (!this.client?.isOpen) {
-      throw new Error('Redis client is not connected');
+      throw new Error("Redis client is not connected");
     }
 
     return this.client;
   }
 
-  async ping(): Promise<string> {
-    return this.getClient().ping();
-  }
-
-  async timeseriesCreate(key: string, retentionMs?: number, labels?: Record<string, string>): Promise<void> {
-    const args = ['TS.CREATE', key];
+  async timeseriesCreate(
+    key: string,
+    retentionMs?: number,
+    labels?: Record<string, string>
+  ): Promise<void> {
+    const args = ["TS.CREATE", key];
     if (retentionMs) {
-      args.push('RETENTION', String(retentionMs));
+      args.push("RETENTION", String(retentionMs));
     }
     if (labels) {
-      args.push('LABELS', ...Object.entries(labels).flat());
+      args.push("LABELS", ...Object.entries(labels).flat());
     }
 
     try {
       await this.getClient().sendCommand(args);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      if (message.includes('already exists') || message.includes('BUSYKEY')) {
+      if (message.includes("already exists") || message.includes("BUSYKEY")) {
         return;
       }
       throw error;
     }
   }
 
-  async timeseriesAdd(key: string, timestamp: number, value: number): Promise<void> {
-    await this.getClient().sendCommand(['TS.ADD', key, String(timestamp), String(value)]);
+  async timeseriesAdd(
+    key: string,
+    timestamp: number,
+    value: number
+  ): Promise<void> {
+    await this.getClient().sendCommand([
+      "TS.ADD",
+      key,
+      String(timestamp),
+      String(value),
+    ]);
   }
 
-  async timeseriesRange(key: string, from: number, to: number): Promise<Array<[number, number]>> {
-    const reply: unknown = await this.getClient().sendCommand(['TS.RANGE', key, String(from), String(to)]);
+  async timeseriesRange(
+    key: string,
+    from: number,
+    to: number
+  ): Promise<Array<[number, number]>> {
+    const reply: unknown = await this.getClient().sendCommand([
+      "TS.RANGE",
+      key,
+      String(from),
+      String(to),
+    ]);
     if (!Array.isArray(reply)) {
       return [];
     }
@@ -83,7 +101,9 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
       }
       const timestamp = Number(point[0]);
       const value = Number(point[1]);
-      return Number.isFinite(timestamp) && Number.isFinite(value) ? [[timestamp, value] as [number, number]] : [];
+      return Number.isFinite(timestamp) && Number.isFinite(value)
+        ? [[timestamp, value] as [number, number]]
+        : [];
     });
   }
 }

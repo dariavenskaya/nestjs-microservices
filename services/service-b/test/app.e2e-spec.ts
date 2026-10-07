@@ -16,9 +16,9 @@ describe('Logs (e2e)', () => {
       imports: [AppModule],
     })
       .overrideProvider(MongoService)
-      .useValue({ ping: async () => undefined })
+      .useValue({ getClient: async () => ({}) })
       .overrideProvider(RedisService)
-      .useValue({ ping: async () => 'PONG' })
+      .useValue({ getClient: async () => ({}) })
       .overrideProvider(MessagingService)
       .useValue({
         publish: async () => undefined,

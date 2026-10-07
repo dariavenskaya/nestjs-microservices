@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsIn, IsNumber, IsOptional, IsString, Max, Min } from 'class-validator';
+import { IsNumber, IsOptional, IsString, Max, Min } from 'class-validator';
 
 export class SearchDto {
   @ApiProperty({ required: false, example: 'Leanne', description: 'Text search across indexed fields' })
@@ -8,12 +8,13 @@ export class SearchDto {
   @IsOptional()
   q?: string;
 
-  @ApiProperty({ required: false, default: 1 })
-  @Type(() => Number)
-  @IsNumber()
-  @Min(1)
+  @ApiProperty({
+    required: false,
+    description: 'Cursor returned as nextCursor from the previous page. Omit it to read the first page.',
+  })
+  @IsString()
   @IsOptional()
-  page?: number = 1;
+  cursor?: string;
 
   @ApiProperty({ required: false, default: 10 })
   @Type(() => Number)
@@ -22,14 +23,4 @@ export class SearchDto {
   @Max(100)
   @IsOptional()
   limit?: number = 10;
-
-  @ApiProperty({ required: false, example: 'createdAt' })
-  @IsString()
-  @IsOptional()
-  sortBy?: string;
-
-  @ApiProperty({ required: false, enum: ['asc', 'desc'], default: 'asc' })
-  @IsIn(['asc', 'desc'])
-  @IsOptional()
-  sortOrder?: 'asc' | 'desc' = 'asc';
 }

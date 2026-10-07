@@ -16,23 +16,21 @@ describe('Records (e2e)', () => {
     })
       .overrideProvider(MongoService)
       .useValue({
-        ping: async () => undefined,
         getCollection: () => ({
           find: () => ({
             sort: () => ({
-              skip: () => ({
-                limit: () => ({
-                  toArray: async () => [{ name: 'Leanne' }],
-                }),
+              limit: () => ({
+                toArray: async () => [{ name: 'Leanne' }],
               }),
             }),
           }),
+          dropIndex: async () => undefined,
+          createIndex: async () => undefined,
           countDocuments: async () => 1,
         }),
       })
       .overrideProvider(RedisService)
       .useValue({
-        ping: async () => 'PONG',
         timeseriesCreate: async () => undefined,
         timeseriesAdd: async () => undefined,
       })
@@ -51,7 +49,7 @@ describe('Records (e2e)', () => {
     return request(app.getHttpServer())
       .get('/records/search')
       .expect(200)
-      .expect({ data: [{ name: 'Leanne' }], total: 1, page: 1, limit: 10 });
+      .expect({ data: [{ name: 'Leanne' }], total: 1, limit: 10, nextCursor: null });
   });
 
   afterEach(async () => {

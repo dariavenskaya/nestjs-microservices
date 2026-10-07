@@ -10,7 +10,7 @@ import { ReportsModule } from './reports/reports.module.ts';
   imports: [
     MongoModule,
     RedisModule,
-    MessagingModule.forRoot(process.env.REDIS_URL ?? 'redis://127.0.0.1:6379'),
+    MessagingModule,
     LogsModule,
     EventsModule,
     ReportsModule,

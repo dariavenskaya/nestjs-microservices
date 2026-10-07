@@ -69,21 +69,21 @@ docker cp nestjs-microservices-service-a-1:/data/users.json ./users.json
 curl -F 'file=@users.json;type=application/json' http://localhost:3001/data/upload
 ```
 
-Rows are inserted into the `records` collection in batches. A text index covers the document fields, and `createdAt` is indexed for sorting.
+Rows are inserted into the `records` collection in batches. A text index covers the document fields, and `{ createdAt: -1, _id: -1 }` supports cursor pagination.
 
 ### 3. Search records
 
 ```bash
-curl 'http://localhost:3001/records/search?q=Leanne&page=1&limit=10'
+curl 'http://localhost:3001/records/search?q=Leanne&limit=10'
 ```
 
-| Query       | Meaning                               |
-| ----------- | ------------------------------------- |
-| `q`         | Text search. Omit it to list records. |
-| `page`      | Page number, starting at 1            |
-| `limit`     | Page size, from 1 to 100. Default 10  |
-| `sortBy`    | Field name. Default `createdAt`       |
-| `sortOrder` | `asc` or `desc`                       |
+Results are ordered by `createdAt` descending, then `_id`. Pass `nextCursor` from the response as `cursor` to read the next page.
+
+| Query    | Meaning                                                                    |
+| -------- | -------------------------------------------------------------------------- |
+| `q`      | Text search. Omit it to list records.                                      |
+| `cursor` | Opaque cursor from the previous response. Omit it for the first page.     |
+| `limit`  | Page size, from 1 to 100. Default 10                                       |
 
 One record: `GET /records/:id`.
 
@@ -95,7 +95,7 @@ Each fetch, upload, search, and record lookup is published to Service B and stor
 curl 'http://localhost:3002/logs?type=DATA_FETCHED&startDate=2026-01-01&endDate=2026-12-31'
 ```
 
-`type` is one of `DATA_FETCHED`, `FILE_UPLOADED`, `RECORDS_SEARCHED`, or `RECORD_RETRIEVED`. `startDate` and `endDate` are optional `YYYY-MM-DD` filters. `page` and `limit` work the same way as search.
+`type` is one of `DATA_FETCHED`, `FILE_UPLOADED`, `RECORDS_SEARCHED`, or `RECORD_RETRIEVED`. `startDate` and `endDate` are optional `YYYY-MM-DD` filters. `page` starts at 1 and `limit` defaults to 10.
 
 ### 5. Download a PDF report
 
