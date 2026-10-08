@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsDateString, IsEnum, IsOptional } from 'class-validator';
-import { EventType } from '../types.ts';
+import { EventType } from '../types';
 
 export class ReportQueryDto {
   @ApiProperty({ example: '2026-01-01' })

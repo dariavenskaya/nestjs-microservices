@@ -1,7 +1,7 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { LogQueryDto } from './log-query.dto.ts';
-import { LogsService } from './logs.service.ts';
+import { LogQueryDto } from './log-query.dto';
+import { LogsService } from './logs.service';
 
 @ApiTags('Logs')
 @Controller('logs')

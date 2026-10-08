@@ -1,12 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
-import { MessagingService } from '../../lib/messaging/messaging.service.ts';
-import { MongoService } from '../../lib/mongo/mongo.service.ts';
-import { RedisService } from '../../lib/redis/redis.service.ts';
-import { EventsSubscriber } from './../src/events/events.subscriber.ts';
-import { LogsService } from './../src/logs/logs.service.ts';
-import { AppModule } from './../src/app.module.ts';
+import { MessagingService } from '../../lib/messaging/messaging.service';
+import { MongoService } from '../../lib/mongo/mongo.service';
+import { RedisService } from '../../lib/redis/redis.service';
+import { EventsSubscriber } from './../src/events/events.subscriber';
+import { LogsService } from './../src/logs/logs.service';
+import { AppModule } from './../src/app.module';
 
 describe('Logs (e2e)', () => {
   let app: INestApplication;

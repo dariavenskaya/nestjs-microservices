@@ -1,10 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
-import { MessagingService } from '../../lib/messaging/messaging.service.ts';
-import { MongoService } from '../../lib/mongo/mongo.service.ts';
-import { RedisService } from '../../lib/redis/redis.service.ts';
-import { AppModule } from './../src/app.module.ts';
+import { MessagingService } from '../../lib/messaging/messaging.service';
+import { MongoService } from '../../lib/mongo/mongo.service';
+import { RedisService } from '../../lib/redis/redis.service';
+import { AppModule } from './../src/app.module';
 import { App } from 'supertest/types.js';
 
 describe('Records (e2e)', () => {

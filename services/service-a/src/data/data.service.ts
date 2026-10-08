@@ -10,7 +10,7 @@ import {
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import ExcelJS from 'exceljs';
-import { FileFormat } from './fetch-data.dto.ts';
+import { FileFormat } from './fetch-data.dto';
 
 @Injectable()
 export class DataService implements OnModuleInit {

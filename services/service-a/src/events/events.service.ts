@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
-import { MessagingService } from '../../../lib/messaging/messaging.service.ts';
-import { RedisService } from '../../../lib/redis/redis.service.ts';
+import { MessagingService } from '../../../lib/messaging/messaging.service';
+import { RedisService } from '../../../lib/redis/redis.service';
 
 export const SERVICE_A_EVENTS = 'service-a.events';
 

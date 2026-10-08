@@ -1,6 +1,6 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { MessagingService } from '../../../lib/messaging/messaging.service.ts';
-import { LogsService } from '../logs/logs.service.ts';
+import { MessagingService } from '../../../lib/messaging/messaging.service';
+import { LogsService } from '../logs/logs.service';
 
 const SERVICE_A_EVENTS = 'service-a.events';
 

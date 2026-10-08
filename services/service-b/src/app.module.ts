@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
-import { MessagingModule } from '../../lib/messaging/messaging.module.ts';
-import { MongoModule } from '../../lib/mongo/mongo.module.ts';
-import { RedisModule } from '../../lib/redis/redis.module.ts';
-import { EventsModule } from './events/events.module.ts';
-import { LogsModule } from './logs/logs.module.ts';
-import { ReportsModule } from './reports/reports.module.ts';
+import { MessagingModule } from '../../lib/messaging/messaging.module';
+import { MongoModule } from '../../lib/mongo/mongo.module';
+import { RedisModule } from '../../lib/redis/redis.module';
+import { EventsModule } from './events/events.module';
+import { LogsModule } from './logs/logs.module';
+import { ReportsModule } from './reports/reports.module';
 
 @Module({
   imports: [

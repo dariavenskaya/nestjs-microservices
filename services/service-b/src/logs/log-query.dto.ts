@@ -8,7 +8,7 @@ import {
   Max,
   Min,
 } from 'class-validator';
-import { EventType } from '../types.ts';
+import { EventType } from '../types';
 
 export class LogQueryDto {
   @ApiProperty({ required: false, example: 'DATA_FETCHED', enum: EventType })

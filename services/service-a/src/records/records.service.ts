@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Document, MongoBulkWriteError, ObjectId } from 'mongodb';
-import { MongoService } from '../../../lib/mongo/mongo.service.ts';
+import { MongoService } from '../../../lib/mongo/mongo.service';
 
 @Injectable()
 export class RecordsService {

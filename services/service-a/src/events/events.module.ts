@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { EventsService } from './events.service.ts';
+import { EventsService } from './events.service';
 
 @Module({
   providers: [EventsService],

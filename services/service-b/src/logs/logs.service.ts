@@ -1,8 +1,10 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { MongoService } from '../../../lib/mongo/mongo.service.ts';
-import { MessagePayload } from '../../../lib/messaging/messaging.service.ts';
+import { MongoError } from 'mongodb';
+import { MongoService } from '../../../lib/mongo/mongo.service';
+import { MessagePayload } from '../../../lib/messaging/messaging.service';
 
 export interface EventLog {
+  _id?: unknown;
   event: string;
   data: Record<string, unknown>;
   timestamp: number;
@@ -15,39 +17,46 @@ export interface EventLog {
 export class LogsService implements OnModuleInit {
   private readonly logger = new Logger(LogsService.name);
   private readonly collectionName = 'event_logs';
+  private readonly MONGO_DUPLICATE_KEY_CODE = 11000;
+  private readonly MAX_SERIES_LIMIT = 5000;
 
   constructor(private readonly mongo: MongoService) {}
 
-  async onModuleInit(): Promise<void> {
-    const collection = this.mongo.getCollection(this.collectionName);
-    await collection.dropIndex('eventId_1').catch(() => undefined);
-    await collection.createIndex({ timestamp: -1 });
-    await collection.createIndex({ event: 1 });
-    await collection.createIndex({ service: 1 });
-    await collection.createIndex({ correlationId: 1 }, { unique: true, sparse: true });
+  private get collection() {
+    return this.mongo.getCollection<EventLog>(this.collectionName);
   }
 
-  async isDuplicate(correlationId?: string): Promise<boolean> {
-    if (!correlationId) {
-      return false;
-    }
-    const existing = await this.mongo.getCollection(this.collectionName).findOne({ correlationId });
-    return existing !== null;
+  async onModuleInit(): Promise<void> {
+    const collection = this.collection;
+    // Составные индексы под реальные паттерны запросов (фильтр + сортировка)
+    await collection.createIndex({ event: 1, timestamp: -1 });
+    await collection.createIndex({ service: 1, timestamp: -1 });
+    await collection.createIndex(
+      { correlationId: 1 },
+      { unique: true, sparse: true },
+    );
   }
 
   async create(payload: MessagePayload): Promise<void> {
-    if (await this.isDuplicate(payload.correlationId)) {
-      this.logger.warn(`Duplicate event ${payload.correlationId} skipped`);
-      return;
+    try {
+      await this.collection.insertOne({
+        event: payload.event,
+        data: payload.data ?? {},
+        timestamp: payload.timestamp,
+        service: payload.service,
+        correlationId: payload.correlationId,
+        createdAt: new Date(),
+      });
+    } catch (error) {
+      if (
+        error instanceof MongoError &&
+        error.code === this.MONGO_DUPLICATE_KEY_CODE
+      ) {
+        this.logger.warn(`Duplicate event ${payload.correlationId} skipped`);
+        return;
+      }
+      throw error;
     }
-    await this.mongo.getCollection<EventLog>(this.collectionName).insertOne({
-      event: payload.event,
-      data: payload.data ?? {},
-      timestamp: payload.timestamp,
-      service: payload.service,
-      correlationId: payload.correlationId,
-      createdAt: new Date(),
-    });
   }
 
   async query(
@@ -57,39 +66,75 @@ export class LogsService implements OnModuleInit {
     page = 1,
     limit = 10,
   ): Promise<{ data: EventLog[]; total: number; page: number; limit: number }> {
+    const safePage = Math.max(1, page);
+    const safeLimit = Math.min(100, Math.max(1, limit));
+    const skip = (safePage - 1) * safeLimit;
+
     const filter: Record<string, unknown> = {};
     if (type) {
       filter.event = type;
     }
-    if (startDate || endDate) {
-      const timestamp: Record<string, number> = {};
-      if (startDate) {
-        timestamp.$gte = new Date(startDate).getTime();
-      }
-      if (endDate) {
-        timestamp.$lte = new Date(endDate).getTime() + 86_400_000 - 1;
-      }
-      filter.timestamp = timestamp;
+
+    const dateFilter = this.buildDateRangeFilter(startDate, endDate);
+    if (dateFilter) {
+      filter.timestamp = dateFilter;
     }
-    const collection = this.mongo.getCollection<EventLog>(this.collectionName);
-    const skip = (page - 1) * limit;
+
     const [data, total] = await Promise.all([
-      collection.find(filter).sort({ timestamp: -1 }).skip(skip).limit(limit).toArray(),
-      collection.countDocuments(filter),
+      this.collection
+        .find(filter)
+        .sort({ timestamp: -1 })
+        .skip(skip)
+        .limit(safeLimit)
+        .toArray(),
+      this.collection.countDocuments(filter),
     ]);
-    return { data, total, page, limit };
+
+    return { data, total, page: safePage, limit: safeLimit };
   }
 
-  async series(startDate: string, endDate: string, type?: string): Promise<EventLog[]> {
-    const filter: Record<string, unknown> = {
-      timestamp: {
-        $gte: new Date(startDate).getTime(),
-        $lte: new Date(endDate).getTime() + 86_400_000 - 1,
-      },
-    };
+  async series(
+    startDate: string,
+    endDate: string,
+    type?: string,
+  ): Promise<EventLog[]> {
+    const dateFilter = this.buildDateRangeFilter(startDate, endDate);
+    if (!dateFilter) {
+      throw new Error('Invalid or missing date range for series query');
+    }
+
+    const filter: Record<string, unknown> = { timestamp: dateFilter };
     if (type) {
       filter.event = type;
     }
-    return this.mongo.getCollection<EventLog>(this.collectionName).find(filter).sort({ timestamp: 1 }).toArray();
+
+    return this.collection
+      .find(filter)
+      .sort({ timestamp: 1 })
+      .limit(this.MAX_SERIES_LIMIT)
+      .toArray();
+  }
+
+  private buildDateRangeFilter(
+    startDate?: string,
+    endDate?: string,
+  ): Record<string, number> | null {
+    const timestamp: Record<string, number> = {};
+
+    if (startDate) {
+      const start = new Date(startDate).getTime();
+      if (!isNaN(start)) timestamp.$gte = start;
+    }
+
+    if (endDate) {
+      const end = new Date(endDate);
+      const endMs = end.getTime();
+      if (!isNaN(endMs)) {
+        const isDateOnly = endDate.length === 10 && !endDate.includes('T');
+        timestamp.$lte = isDateOnly ? endMs + 86_400_000 - 1 : endMs;
+      }
+    }
+
+    return Object.keys(timestamp).length > 0 ? timestamp : null;
   }
 }

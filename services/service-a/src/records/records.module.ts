@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
-import { EventsModule } from '../events/events.module.ts';
-import { RecordsController } from './records.controller.ts';
-import { RecordsService } from './records.service.ts';
+import { EventsModule } from '../events/events.module';
+import { RecordsController } from './records.controller';
+import { RecordsService } from './records.service';
 
 @Module({
   imports: [EventsModule],

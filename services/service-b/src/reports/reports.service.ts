@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import PDFDocument from 'pdfkit';
-import { EventLog, LogsService } from '../logs/logs.service.ts';
+import { EventLog, LogsService } from '../logs/logs.service';
 
 interface Point {
   timestamp: number;

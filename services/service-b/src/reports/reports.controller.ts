@@ -1,7 +1,7 @@
 import { Controller, Get, Query, StreamableFile } from '@nestjs/common';
 import { ApiOperation, ApiProduces, ApiTags } from '@nestjs/swagger';
-import { ReportQueryDto } from './report-query.dto.ts';
-import { ReportsService } from './reports.service.ts';
+import { ReportQueryDto } from './report-query.dto';
+import { ReportsService } from './reports.service';
 
 @ApiTags('Reports')
 @Controller('reports')

@@ -13,10 +13,10 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBody, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { diskStorage } from 'multer';
 import path from 'node:path';
-import { EventsService } from '../events/events.service.ts';
-import { RecordsService } from '../records/records.service.ts';
-import { DataService } from './data.service.ts';
-import { FetchDataDto } from './fetch-data.dto.ts';
+import { EventsService } from '../events/events.service';
+import { RecordsService } from '../records/records.service';
+import { DataService } from './data.service';
+import { FetchDataDto } from './fetch-data.dto';
 
 @ApiTags('Data')
 @Controller('data')

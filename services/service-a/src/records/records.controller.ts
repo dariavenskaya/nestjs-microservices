@@ -1,8 +1,8 @@
 import { Controller, Get, Param, Query } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { EventsService } from '../events/events.service.ts';
-import { RecordsService } from './records.service.ts';
-import { SearchDto } from './search.dto.ts';
+import { EventsService } from '../events/events.service';
+import { RecordsService } from './records.service';
+import { SearchDto } from './search.dto';
 
 @ApiTags('Records')
 @Controller('records')
