@@ -1,7 +1,13 @@
-import { BadRequestException, Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  OnModuleInit,
+} from '@nestjs/common';
 import { MongoError } from 'mongodb';
 import { MongoService } from '../../../lib/mongo/mongo.service';
 import { MessagePayload } from '../../../lib/messaging/messaging.service';
+import { LogQueryDto } from './log-query.dto';
 
 export interface EventLog {
   _id?: unknown;
@@ -28,7 +34,6 @@ export class LogsService implements OnModuleInit {
 
   async onModuleInit(): Promise<void> {
     const collection = this.collection;
-    // Составные индексы под реальные паттерны запросов (фильтр + сортировка)
     await collection.createIndex({ event: 1, timestamp: -1 });
     await collection.createIndex({ service: 1, timestamp: -1 });
     await collection.createIndex(
@@ -60,12 +65,9 @@ export class LogsService implements OnModuleInit {
   }
 
   async query(
-    type?: string,
-    startDate?: string,
-    endDate?: string,
-    page = 1,
-    limit = 10,
+    params: LogQueryDto,
   ): Promise<{ data: EventLog[]; total: number; page: number; limit: number }> {
+    const { type, startDate, endDate, page = 1, limit = 10 } = params;
     const safePage = Math.max(1, page);
     const safeLimit = Math.min(100, Math.max(1, limit));
     const skip = (safePage - 1) * safeLimit;
@@ -146,7 +148,9 @@ function parseDate(value: string, field: string): number {
   const day = Number(match[3]);
   const utc = new Date(Date.UTC(year, month - 1, day));
   const isRealDay =
-    utc.getUTCFullYear() === year && utc.getUTCMonth() === month - 1 && utc.getUTCDate() === day;
+    utc.getUTCFullYear() === year &&
+    utc.getUTCMonth() === month - 1 &&
+    utc.getUTCDate() === day;
   if (!isRealDay) {
     throw new BadRequestException(`${field} must be a valid calendar date`);
   }

@@ -11,6 +11,6 @@ export class LogsController {
   @Get()
   @ApiOperation({ summary: 'Query stored Service A events by type and date' })
   query(@Query() dto: LogQueryDto) {
-    return this.logsService.query(dto.type, dto.startDate, dto.endDate, dto.page, dto.limit);
+    return this.logsService.query(dto);
   }
 }
