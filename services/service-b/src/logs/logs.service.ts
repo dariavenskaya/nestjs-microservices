@@ -1,4 +1,4 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { MongoError } from 'mongodb';
 import { MongoService } from '../../../lib/mongo/mongo.service';
 import { MessagePayload } from '../../../lib/messaging/messaging.service';
@@ -122,19 +122,42 @@ export class LogsService implements OnModuleInit {
     const timestamp: Record<string, number> = {};
 
     if (startDate) {
-      const start = new Date(startDate).getTime();
-      if (!isNaN(start)) timestamp.$gte = start;
+      timestamp.$gte = parseDate(startDate, 'startDate');
     }
 
     if (endDate) {
-      const end = new Date(endDate);
-      const endMs = end.getTime();
-      if (!isNaN(endMs)) {
-        const isDateOnly = endDate.length === 10 && !endDate.includes('T');
-        timestamp.$lte = isDateOnly ? endMs + 86_400_000 - 1 : endMs;
-      }
+      const endMs = parseDate(endDate, 'endDate');
+      const isDateOnly = endDate.length === 10 && !endDate.includes('T');
+      timestamp.$lte = isDateOnly ? endMs + 86_400_000 - 1 : endMs;
     }
 
     return Object.keys(timestamp).length > 0 ? timestamp : null;
   }
+}
+
+function parseDate(value: string, field: string): number {
+  const match = /^(\d{4})-(\d{2})-(\d{2})(?:$|T)/.exec(value);
+  if (!match) {
+    throw new BadRequestException(`${field} must be a date in YYYY-MM-DD form`);
+  }
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const utc = new Date(Date.UTC(year, month - 1, day));
+  const isRealDay =
+    utc.getUTCFullYear() === year && utc.getUTCMonth() === month - 1 && utc.getUTCDate() === day;
+  if (!isRealDay) {
+    throw new BadRequestException(`${field} must be a valid calendar date`);
+  }
+
+  if (!value.includes('T')) {
+    return utc.getTime();
+  }
+
+  const timestamp = new Date(value).getTime();
+  if (Number.isNaN(timestamp)) {
+    throw new BadRequestException(`${field} must be a valid date`);
+  }
+  return timestamp;
 }
