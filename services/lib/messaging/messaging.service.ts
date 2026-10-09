@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  OnModuleInit,
-  OnModuleDestroy,
-  Inject,
-} from "@nestjs/common";
+import { Injectable, OnModuleInit, OnModuleDestroy } from "@nestjs/common";
 import { createClient, RedisClientType } from "redis";
 
 export interface MessagePayload {
@@ -16,8 +11,8 @@ export interface MessagePayload {
 
 @Injectable()
 export class MessagingService implements OnModuleInit, OnModuleDestroy {
-  private publisher!: RedisClientType;
-  private subscriber!: RedisClientType;
+  private publisher?: RedisClientType;
+  private subscriber?: RedisClientType;
 
   async onModuleInit() {
     const url = process.env.REDIS_URL;
@@ -35,12 +30,15 @@ export class MessagingService implements OnModuleInit, OnModuleDestroy {
   }
 
   async onModuleDestroy() {
-    await this.publisher.quit();
-    await this.subscriber.quit();
+    await this.quit(this.publisher);
+    await this.quit(this.subscriber);
     console.log("Messaging service disconnected");
   }
 
   async publish(channel: string, payload: MessagePayload): Promise<void> {
+    if (!this.publisher?.isOpen) {
+      throw new Error("Messaging publisher is not connected");
+    }
     await this.publisher.publish(channel, JSON.stringify(payload));
   }
 
@@ -48,6 +46,9 @@ export class MessagingService implements OnModuleInit, OnModuleDestroy {
     channel: string,
     callback: (payload: MessagePayload) => void
   ): Promise<void> {
+    if (!this.subscriber?.isOpen) {
+      throw new Error("Messaging subscriber is not connected");
+    }
     await this.subscriber.subscribe(channel, (message) => {
       try {
         const payload = JSON.parse(message) as MessagePayload;
@@ -56,5 +57,11 @@ export class MessagingService implements OnModuleInit, OnModuleDestroy {
         console.error("Error parsing message:", error);
       }
     });
+  }
+
+  private async quit(client?: RedisClientType): Promise<void> {
+    if (client?.isOpen) {
+      await client.quit();
+    }
   }
 }
