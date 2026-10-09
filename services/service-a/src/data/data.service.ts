@@ -1,4 +1,5 @@
 import {
+  BadGatewayException,
   BadRequestException,
   GatewayTimeoutException,
   Injectable,
@@ -31,12 +32,18 @@ export class DataService implements OnModuleInit {
     filename?: string,
   ) {
     const payload = await this.fetchJson(url);
-    const records = Array.isArray(payload) ? payload : [payload];
+    const records = (Array.isArray(payload) ? payload : [payload]).filter(
+      isRecord,
+    );
     if (records.length === 0) {
-      throw new BadRequestException(`The API at "${url}" returned no data.`);
+      throw new BadRequestException(
+        `The API at "${url}" returned no valid record objects.`,
+      );
     }
 
-    const baseName = filename ?? `data_${Date.now()}`;
+    const baseName = filename
+      ? path.basename(filename).replace(/[^a-zA-Z0-9_-]/g, '_')
+      : `data_${Date.now()}`;
     const filepath =
       format === FileFormat.EXCEL
         ? await this.saveExcel(records, baseName)
@@ -46,7 +53,17 @@ export class DataService implements OnModuleInit {
   }
 
   async readJson(filepath: string): Promise<Array<Record<string, unknown>>> {
-    const content = await readFile(filepath, 'utf8');
+    let content: string;
+    try {
+      content = await readFile(filepath, 'utf8');
+    } catch (error) {
+      if (isEnoent(error)) {
+        throw new NotFoundException(
+          `File not found: ${path.basename(filepath)}`,
+        );
+      }
+      throw new InternalServerErrorException('Failed to read file.');
+    }
     if (!content.trim()) {
       throw new BadRequestException('The uploaded JSON file is empty.');
     }
@@ -70,6 +87,11 @@ export class DataService implements OnModuleInit {
     try {
       await workbook.xlsx.readFile(filepath);
     } catch (error) {
+      if (isEnoent(error)) {
+        throw new NotFoundException(
+          `File not found: ${path.basename(filepath)}`,
+        );
+      }
       const detail = error instanceof Error ? error.message : 'Unknown error';
       throw new BadRequestException(`Failed to read Excel file: ${detail}`);
     }
@@ -80,7 +102,7 @@ export class DataService implements OnModuleInit {
 
     const headers: string[] = [];
     worksheet.getRow(1).eachCell({ includeEmpty: false }, (cell, column) => {
-      headers[column - 1] = cellText(cell.value) || `col_${column}`;
+      headers[column - 1] = formatCellValue(cell.value) || `col_${column}`;
     });
 
     const records: Array<Record<string, unknown>> = [];
@@ -92,7 +114,7 @@ export class DataService implements OnModuleInit {
       row.eachCell({ includeEmpty: false }, (cell, column) => {
         const header = headers[column - 1];
         if (header) {
-          record[header] = cell.value;
+          record[header] = parseCellValue(cell.value);
         }
       });
       records.push(record);
@@ -113,9 +135,7 @@ export class DataService implements OnModuleInit {
           `Request to "${url}" timed out after 30 seconds.`,
         );
       }
-      throw new NotFoundException(
-        `The requested URL "${url}" could not be reached.`,
-      );
+      throw new BadGatewayException(`Failed to reach target URL: "${url}".`);
     }
     if (response.status === 404) {
       throw new NotFoundException(
@@ -177,23 +197,49 @@ export class DataService implements OnModuleInit {
     }
     worksheet.getRow(1).font = { bold: true };
     const filepath = path.join(this.dataDir, `${filename}.xlsx`);
-    await workbook.xlsx.writeFile(filepath);
+    try {
+      await workbook.xlsx.writeFile(filepath);
+    } catch (error) {
+      this.logger.error(`Error saving Excel file: ${error}`);
+      throw new InternalServerErrorException('Failed to save the Excel file.');
+    }
     return filepath;
   }
 }
 
-function cellText(value: ExcelJS.CellValue): string {
+function parseCellValue(value: ExcelJS.CellValue): unknown {
   if (value == null) {
-    return '';
+    return null;
   }
-  if (
-    typeof value === 'string' ||
-    typeof value === 'number' ||
-    typeof value === 'boolean'
-  ) {
-    return String(value);
+  if (value instanceof Date) {
+    return value.toISOString();
   }
-  return JSON.stringify(value);
+  if (typeof value === 'object') {
+    if ('richText' in value && Array.isArray(value.richText)) {
+      return value.richText.map((part) => part.text).join('');
+    }
+    if ('result' in value) {
+      return parseCellValue(value.result as ExcelJS.CellValue);
+    }
+    if ('text' in value && typeof value.text === 'string') {
+      return value.text;
+    }
+  }
+  return value;
+}
+
+function formatCellValue(value: ExcelJS.CellValue): string {
+  const parsed = parseCellValue(value);
+  return parsed == null ? '' : String(parsed);
+}
+
+function isEnoent(error: unknown): boolean {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    error.code === 'ENOENT'
+  );
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
