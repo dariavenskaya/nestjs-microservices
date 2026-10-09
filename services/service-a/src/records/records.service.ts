@@ -3,25 +3,29 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  OnModuleInit,
 } from '@nestjs/common';
 import { Document, MongoBulkWriteError, ObjectId } from 'mongodb';
 import { MongoService } from '../../../lib/mongo/mongo.service';
 
 @Injectable()
-export class RecordsService {
+export class RecordsService implements OnModuleInit {
   private readonly logger = new Logger(RecordsService.name);
   private readonly collectionName = 'records';
 
   constructor(private readonly mongo: MongoService) {}
+
+  async onModuleInit(): Promise<void> {
+    const collection = this.mongo.getCollection(this.collectionName);
+    await collection.createIndex({ createdAt: -1, _id: -1 });
+    await collection.createIndex({ '$**': 'text' });
+  }
 
   async insertRecords(
     records: Array<Record<string, unknown>>,
     sourceFile: string,
   ): Promise<number> {
     const collection = this.mongo.getCollection(this.collectionName);
-    await collection.createIndex({ createdAt: -1 });
-    await collection.createIndex({ '$**': 'text' });
-
     const documents = records.map((record) => ({
       ...record,
       _id: new ObjectId(),
@@ -63,8 +67,6 @@ export class RecordsService {
     const collection = this.mongo.getCollection<RecordDocument>(
       this.collectionName,
     );
-    await collection.createIndex({ createdAt: -1 });
-    await collection.createIndex({ '$**': 'text' });
     const match = query ? { $text: { $search: query } } : {};
     const position = cursor ? this.cursorFilter(cursor) : {};
     const filter = combineFilters(match, position);
@@ -148,10 +150,7 @@ function decodeCursor(cursor: string): { createdAt: Date; id: ObjectId } {
       throw new Error('invalid');
     }
     return { createdAt, id: new ObjectId(parsed.id) };
-  } catch (error) {
-    if (error instanceof BadRequestException) {
-      throw error;
-    }
+  } catch {
     throw new BadRequestException('Invalid cursor');
   }
 }
