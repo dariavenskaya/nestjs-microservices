@@ -38,7 +38,7 @@ export class ReportsService {
     document
       .fontSize(12)
       .fillColor('#444444')
-      .text(`Period:${startDate} to${endDate}`, { align: 'center' });
+      .text(`Period: ${startDate} to ${endDate}`, { align: 'center' });
     document.fillColor('black').moveDown(1.5);
 
     if (groups.length === 0) {
@@ -92,7 +92,11 @@ function groupByEvent(logs: EventLog[]): Series[] {
     points.push({ timestamp: log.timestamp, value: log.data.duration });
     grouped.set(log.event, points);
   }
-  return [...grouped.entries()].map(([event, points]) => ({ event, points }));
+
+  return [...grouped.entries()].map(([event, points]) => ({
+    event,
+    points: points.sort((a, b) => a.timestamp - b.timestamp),
+  }));
 }
 
 function getMinMax(values: number[]): { min: number; max: number } {
@@ -111,10 +115,10 @@ function writeStats(document: PDFKit.PDFDocument, points: Point[]): void {
   const { min, max } = getMinMax(values);
 
   document.fontSize(12);
-  document.text(`Count:${values.length}`);
-  document.text(`Average:${average(values).toFixed(1)}`);
-  document.text(`Min:${min}`);
-  document.text(`Max:${max}`);
+  document.text(`Count: ${values.length}`);
+  document.text(`Average: ${average(values).toFixed(1)}`);
+  document.text(`Min: ${min}`);
+  document.text(`Max: ${max}`);
 }
 
 function drawLineChart(document: PDFKit.PDFDocument, series: Series): void {
@@ -149,18 +153,24 @@ function drawLineChart(document: PDFKit.PDFDocument, series: Series): void {
 
   const step =
     series.points.length <= 1 ? 0 : width / (series.points.length - 1);
+
   document.strokeColor('#1f4e79').lineWidth(1.5);
 
-  series.points.forEach((point, index) => {
-    const x = originX + step * index;
-    const y = originY - ((point.value - min) / span) * height;
-    if (index === 0) {
-      document.moveTo(x, y);
-    } else {
-      document.lineTo(x, y);
-    }
-  });
-  document.stroke();
+  if (series.points.length === 1) {
+    const y = originY - ((series.points[0].value - min) / span) * height;
+    document.circle(originX, y, 3).fillAndStroke('#1f4e79', '#1f4e79');
+  } else {
+    series.points.forEach((point, index) => {
+      const x = originX + step * index;
+      const y = originY - ((point.value - min) / span) * height;
+      if (index === 0) {
+        document.moveTo(x, y);
+      } else {
+        document.lineTo(x, y);
+      }
+    });
+    document.stroke();
+  }
 
   const labelIndexes = [
     0,
